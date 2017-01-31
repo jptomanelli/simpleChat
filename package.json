@@ -1,0 +1,12 @@
+{
+  "name": "chatapp",
+  "version": "0.0.1",
+  "description": "Chat application",
+  "main": "main.js",
+  "scripts": {},
+  "author": "JP",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^1.4.15"
+  }
+}
