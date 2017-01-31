@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "description": "Chat application",
   "main": "main.js",
-  "scripts": {},
+  "scripts": {
+    "start": "electron ."
+  },
   "author": "JP",
   "license": "ISC",
   "dependencies": {
