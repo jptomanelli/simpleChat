@@ -14,8 +14,37 @@
       Chromium <script>document.write(process.versions.chrome)</script>,
       and Electron <script>document.write(process.versions.electron)</script>.
     </p>
+    <div id="app">
+      <p>Message: </p><input v-model="message">
+      <p>Secret: </p><input v-model="secret">
+      <p>Data : {{data}}</p>
+      <button v-on:click="enc">Encrypt</button>
+      <button v-on:click="dec">Decrypt</button>
+    </div>
   </body>
   <script>
+    var json, ciphertext, decrypted, plaintext;
+    var app = new Vue({
+      el: "#app" ,
+      data : {
+        message: "Plain Text here" ,
+        secret: "Secret Passphrase" ,
+        data : ""
+      } ,
+      methods : {
+        enc : function () {
+          json = CryptoJS.AES.encrypt(this.message, this.secret);
+          ciphertext = json.ciphertext.toString(CryptoJS.enc.Base64);
+          this.data = ciphertext;
+        } ,
+        dec : function () {
+            decrypted = CryptoJS.AES.decrypt(json, this.secret)
+            plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+            this.data = plaintext;
+        }
+      }
+    })
+    //  This line isn't working
     require('./renderer.js');
   </script>
 </html>
