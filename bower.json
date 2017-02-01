@@ -1,0 +1,15 @@
+{
+  "name": "chatapp",
+  "description": "Chat application",
+  "main": "index.html",
+  "authors": [
+    "JP"
+  ],
+  "license": "ISC",
+  "homepage": "",
+  "private": true,
+  "dependencies": {
+    "crypto-js": "^3.1.9",
+    "vue": "^2.1.10"
+  }
+}
