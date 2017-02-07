@@ -4,13 +4,12 @@
   "description": "Chat application",
   "main": "main.js",
   "scripts": {
-    "start": "electromon ."
+    "start": "electron ./main.js"
   },
   "author": "JP",
   "license": "ISC",
   "dependencies": {
     "bower": "^1.8.0",
-    "electromon": "^1.0.6",
-    "electron": "^1.4.15"
+    "electron-prebuilt": "^1.4.13"
   }
 }
