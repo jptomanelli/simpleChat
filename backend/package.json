@@ -1,0 +1,24 @@
+{
+  "name": "chatapp-server",
+  "version": "0.0.1",
+  "description": "Chat application server",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jptomanelli/UntitledChatApp.git"
+  },
+  "author": "JP",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jptomanelli/UntitledChatApp/issues"
+  },
+  "homepage": "https://github.com/jptomanelli/UntitledChatApp#readme",
+  "dependencies": {
+    "nodemon": "^1.11.0",
+    "socket.io": "^1.7.2"
+  }
+}
