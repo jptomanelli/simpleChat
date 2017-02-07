@@ -9,9 +9,10 @@
       <link rel="stylesheet" type="text/css" href="../public/style.css" />
     </head>
     <body>
+
       <h1 style="text-align: center">simpleChat</h1>
       <hr>
-      <div class="container">
+      <div class="container" id="chatApp">
     <div v-if="!join" id="join" class="text-center">
         <form v-on:submit.prevent="joinChat(name)">
             <div class="form-group">
@@ -21,6 +22,7 @@
         </form>
     </div>
     <div v-if="join" class="text-center">
+
       <p>Hello, {{name}}</p>
         <p style="display:inline">Key: </p><input v-model="key"></input>
         <br>
@@ -31,21 +33,37 @@
       <button v-on:click="enc">enc</button>
       <button v-on:click="dec">dec</button>
       <p>{{msg}}</p>
+      <div class="col-md-6">
+      <ul class="list-group">
+        <li class="list-group-item" v-for="message in messages">{{message}}</li>
+      </ul>
+    </div>
+    <div class="col-md-6">
+    <ul class="list-group">
+      <li class="list-group-item" v-for="user in users">{{user}}</li>
+    </ul>
+  </div>
+      <div class="container">
+        <div class="col-md-6">
+          <form v-on:submit.prevent="send" class="input-group">
+            <input v-model="message" type="text" class="form-control" placeholder="message">
+            <span class="btn">
+              <button class="btn btn-secondary" type="submit">Send</button>
+        </form>
+      </div>
+    </div>
     </div>
   </div>
     </body>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     var socket = io.connect('/');
-    socket.on('announcement', function(data) {
-      console.log('Got announcement: ', data.message);
-      console.log(socket.id);
-      socket.emit('event', { message: socket.id });
-    });
-
     var json, ciphertext, decrypted, plaintext;
-    new Vue({
-    el: '.container',
+    socket.on('announcement', function(data) {
+        console.log('Got announcement:', data.message);
+    });
+    var vm = new Vue({
+    el: '#chatApp',
     data: {
         join: false,
         name: null,
@@ -53,12 +71,34 @@
         ct: null,
         pt: null,
         key: null,
+        // new
+        message: '',
+        messages: [],
+        users: []
+    },
+    mounted: function() {
+        socket.on('chat.message', function(message) {
+            this.messages.push(message);
+        }.bind(this));
+        socket.on('user.add', function(user) {
+          this.users.push(user);
+        }.bind(this));
+        //  May be a issue with working on this array
+        //  not sure how threading works with JS
+        socket.on('user.remove', function(user) {
+          var index = this.users.indexOf(user);
+          if (index > -1)  {
+            this.users.splice(index, 1);
+            console.log('worked');
+          }
+        }.bind(this));
     },
     methods: {
         joinChat : function (name) {
             if (name) {
                 this.name = name;
                 this.join = true;
+                socket.emit('join', name);
             }
         } ,
         enc : function () {
@@ -72,8 +112,12 @@
             plaintext = decrypted.toString(CryptoJS.enc.Utf8);
             this.pt = plaintext;
             this.msg = plaintext;
+        } ,
+        send: function(event){
+            socket.emit('chat.message', '<' + this.name + '> ' + this.message);
+            this.message = '';
         }
-    }
-});
+    } ,
+    });
   </script>
 </html>
