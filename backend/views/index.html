@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>simpleChat</title>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+      <script type="text/javascript" src="/public/crypto-js/crypto-js.js"></script>
+      <script type="text/javascript" src="public/vue/dist/vue.min.js"></script>
+      <link rel="stylesheet" type="text/css" href="../public/style.css" />
+    </head>
+    <body>
+      <h1 style="text-align: center">simpleChat</h1>
+      <hr>
+      <div class="container">
+    <div v-if="!join" id="join" class="text-center">
+        <form v-on:submit.prevent="joinChat(name)">
+            <div class="form-group">
+                <input type="text" class="form-control input-lg text-center" v-model="name" placeholder="Name">
+            </div>
+            <button class="btn btn-primary btn-lg" type="submit">Join</button>
+        </form>
+    </div>
+    <div v-if="join" class="text-center">
+      <p>Hello, {{name}}</p>
+        <p style="display:inline">Key: </p><input v-model="key"></input>
+        <br>
+        <p style="display:inline">PT: </p><input v-model="pt"></input>
+        <br>
+        <p style="display:inline">CT: </p><input v-model="ct"></input>
+        <br>
+      <button v-on:click="enc">enc</button>
+      <button v-on:click="dec">dec</button>
+      <p>{{msg}}</p>
+    </div>
+  </div>
+    </body>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io.connect('/');
+    socket.on('announcement', function(data) {
+      console.log('Got announcement: ', data.message);
+      console.log(socket.id);
+      socket.emit('event', { message: socket.id });
+    });
+
+    var json, ciphertext, decrypted, plaintext;
+    new Vue({
+    el: '.container',
+    data: {
+        join: false,
+        name: null,
+        msg: null,
+        ct: null,
+        pt: null,
+        key: null,
+    },
+    methods: {
+        joinChat : function (name) {
+            if (name) {
+                this.name = name;
+                this.join = true;
+            }
+        } ,
+        enc : function () {
+            json = CryptoJS.AES.encrypt(this.pt, this.key);
+            ciphertext = json.ciphertext.toString(CryptoJS.enc.Base64);
+            this.ct = ciphertext;
+            this.msg = ciphertext;
+        } ,
+        dec : function () {
+            decrypted = CryptoJS.AES.decrypt(json, this.key)
+            plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+            this.pt = plaintext;
+            this.msg = plaintext;
+        }
+    }
+});
+  </script>
+</html>
