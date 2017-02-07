@@ -22,7 +22,7 @@
       <button v-on:click="dec">Decrypt</button>
     </div>
   </body>
-  <script>
+<script>
     var json, ciphertext, decrypted, plaintext;
     var app = new Vue({
       el: "#app" ,
@@ -36,15 +36,16 @@
           json = CryptoJS.AES.encrypt(this.message, this.secret);
           ciphertext = json.ciphertext.toString(CryptoJS.enc.Base64);
           this.data = ciphertext;
+          this.message = ciphertext;
+          this.secret = "";
         } ,
         dec : function () {
             decrypted = CryptoJS.AES.decrypt(json, this.secret)
             plaintext = decrypted.toString(CryptoJS.enc.Utf8);
             this.data = plaintext;
+            this.message = plaintext;
         }
       }
     })
-    //  This line isn't working
-    require('./renderer.js');
   </script>
 </html>
