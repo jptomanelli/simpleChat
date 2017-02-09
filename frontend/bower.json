@@ -10,6 +10,7 @@
   "private": true,
   "dependencies": {
     "crypto-js": "^3.1.9",
-    "vue": "^2.1.10"
+    "vue": "^2.1.10",
+    "bootstrap": "^3.3.7"
   }
 }
