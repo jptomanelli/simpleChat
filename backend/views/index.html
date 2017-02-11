@@ -3,46 +3,59 @@
     <head>
       <meta charset="UTF-8">
       <title>simpleChat</title>
-      <link rel="stylesheet" href="public/bootstrap/dist/css/bootstrap.min.css">
-      <script type="text/javascript" src="public/crypto-js/crypto-js.js"></script>
-      <script type="text/javascript" src="public/vue/dist/vue.min.js"></script>
+      <link rel="stylesheet" href="public/JS/bootstrap/dist/css/bootstrap.min.css">
+      <script type="text/javascript" src="public/JS/crypto-js/crypto-js.js"></script>
+      <script type="text/javascript" src="public/JS/vue/dist/vue.min.js"></script>
       <link rel="stylesheet" type="text/css" href="../public/style.css" />
     </head>
     <body>
-
-      <h1 style="text-align: center">simpleChat</h1>
-      <hr>
+      <!--  Title -->
+      <h1 class="header">SimpleChat</h1>
+      <!--  chatApp container -->
       <div class="container" id="chatApp">
-    <div v-if="!join" id="join" class="text-center">
-        <form v-on:submit.prevent="joinChat(name)">
-            <div class="form-group">
-                <input type="text" class="form-control input-lg text-center" v-model="name" placeholder="Name">
+        <!--  Choose username -->
+        <div v-if="!join" id="join" class="text-center">
+          <h2 class="subheader">
+            Subheading
+          </h2>
+          <h2 class="paragraph ">
+            The first approach uses Bootstrap's own offset classes so it requires no change in markup and no extra CSS. The key is to set an offset equal to half of the remaining size of the row. So for example, a column of size 2 would be centered by adding an of
+          </h2>
+          <hr>
+          <form v-on:submit.prevent="joinChat(name)">
+            <div class="form-group form-group-md">
+                <input type="text" class="form-control input-md text-center" v-model="name" placeholder="Name">
             </div>
-            <button class="btn btn-primary btn-lg" type="submit">Join</button>
+            <button class="btn btn-primary btn-md" type="submit">Join</button>
         </form>
+      </div>
+      <div v-if="join" class="text-center">
+      <div v-if="!keySet" id="key" class="text-center">
+        <form v-on:submit.prevent="setKey(key)">
+          <div class="form-group form-group-md">
+              <input style="height:200px;font-size:14pt;" type="text" class="form-control input-md text-center" v-model="key" placeholder="Key">
+          </div>
+          <button class="btn btn-primary btn-md" type="submit">Set</button>
+      </form>
+      </div>
     </div>
-    <div v-if="join" class="text-center">
 
+      <!--  Messaging -->
+    <div v-if="join" class="text-center">
+      <div v-if="keySet" class="text-center">
       <p>Hello, {{name}}</p>
-        <p style="display:inline">Key: </p><input v-model="key"></input>
-        <br>
-        <p style="display:inline">PT: </p><input v-model="pt"></input>
-        <br>
-        <p style="display:inline">CT: </p><input v-model="ct"></input>
-        <br>
-      <button v-on:click="enc">enc</button>
-      <button v-on:click="dec">dec</button>
-      <p>{{msg}}</p>
+      <div class="col-md-6">
+        <h3>Users</h3>
+      <ul class="list-group">
+        <li class="list-group-item" v-for="user in users">{{user}}</li>
+      </ul>
+    </div>
+    <hr>
       <div class="col-md-6">
       <ul class="list-group">
         <li class="list-group-item" v-for="message in messages">{{message}}</li>
       </ul>
     </div>
-    <div class="col-md-6">
-    <ul class="list-group">
-      <li class="list-group-item" v-for="user in users">{{user}}</li>
-    </ul>
-  </div>
       <div class="container">
         <div class="col-md-6">
           <form v-on:submit.prevent="send" class="input-group">
@@ -54,11 +67,15 @@
     </div>
     </div>
   </div>
-    </body>
+</body>
   <script src="/socket.io/socket.io.js"></script>
   <script>
+    var messageDecrypt = (message, key) => {
+      var decrypted = CryptoJS.AES.decrypt(message, key)
+      var plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+      return (plaintext);
+    }
     var socket = io.connect('/');
-    var json, ciphertext, decrypted, plaintext;
     socket.on('announcement', function(data) {
         console.log('Got announcement:', data.message);
     });
@@ -66,31 +83,33 @@
     el: '#chatApp',
     data: {
         join: false,
+        keySet: false,
         name: null,
-        msg: null,
-        ct: null,
-        pt: null,
-        key: null,
-        // new
+        key: "secret",
         message: '',
         messages: [],
-        users: []
+        users: [],
+        key: ''
     },
     mounted: function() {
-        socket.on('chat.message', function(message) {
-            this.messages.push(message);
+        //  Get chat message
+        socket.on('chat.message', function(data) {
+            //  console.log(data);
+            var plaintext = messageDecrypt(data, this.key);
+            this.messages.push(plaintext);
         }.bind(this));
-        socket.on('user.add', function(user) {
-          this.users.push(user);
+        //  Update user list
+        socket.on('users.update', function(users) {
+          this.users = users;
+          console.log(users);
         }.bind(this));
-        //  May be a issue with working on this array
-        //  not sure how threading works with JS
-        socket.on('user.remove', function(user) {
-          var index = this.users.indexOf(user);
-          if (index > -1)  {
-            this.users.splice(index, 1);
-            console.log('worked');
+        //  Update messages
+        socket.on('chat.update', function(messages) {
+          //  Decrypt message in messages
+          for ( var i = 0; i < messages.length; i++ ) {
+            messages[i] = messageDecrypt(messages[i], this.key);
           }
+          this.messages = messages;
         }.bind(this));
     },
     methods: {
@@ -98,23 +117,21 @@
             if (name) {
                 this.name = name;
                 this.join = true;
-                socket.emit('join', name);
+                socket.emit('join', this.name);
             }
         } ,
-        enc : function () {
-            json = CryptoJS.AES.encrypt(this.pt, this.key);
-            ciphertext = json.ciphertext.toString(CryptoJS.enc.Base64);
-            this.ct = ciphertext;
-            this.msg = ciphertext;
+        setKey : function (key) {
+          if (key) {
+            this.key = key;
+            this.keySet = true;
+            socket.emit('ready' , this.name);
+          }
         } ,
-        dec : function () {
-            decrypted = CryptoJS.AES.decrypt(json, this.key)
-            plaintext = decrypted.toString(CryptoJS.enc.Utf8);
-            this.pt = plaintext;
-            this.msg = plaintext;
-        } ,
+        //  Issue with sending ciphertext OBJ ?
         send: function(event){
-            socket.emit('chat.message', '<' + this.name + '> ' + this.message);
+            var ciphertext = CryptoJS.AES.encrypt(this.message, this.key).toString();
+            //console.log("Sending: " + ciphertext);
+            socket.emit('chat.message', ciphertext);
             this.message = '';
         }
     } ,
