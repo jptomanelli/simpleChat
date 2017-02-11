@@ -23,9 +23,19 @@ io.on('connection', function(socket){
         io.sockets.emit('chat.message', message);
     });
 
+  //  Disconnect - Not currently working
+  //  When a user disconnects they are not removed from user array
+  //  Maybe an issue with index or splice ? ?
   socket.on('disconnect', function () {
-    console.log('\x1b[36m', socket.id + ' disconnected', '\x1b[0m');
-    io.sockets.emit('user.remove', socket.id);
+    var index = ids.indexOf(socket.id);
+    if (index > -1) {
+      ids.splice(index, 1);
+      users.splice(index,1);
+      console.log('\x1b[36m', socket.id + ' disconnected', '\x1b[0m');
+      io.sockets.emit('users.update', users);
+    } else {
+      console.log('There has been an error with the userlist');
+    }
   });
 
 });
