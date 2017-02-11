@@ -16,6 +16,15 @@ io.on('connection', function(socket){
   socket.on('join', function(user) {
     console.log(socket.id + ' set his username to ' + user);
     io.sockets.emit('user.add', user);
+    users.push(user);
+    ids.push(socket.id);
+    //  Populate user list
+    io.sockets.emit('users.update', users);
+  });
+  //  ready
+  socket.on('ready', function(user) {
+    socket.emit('chat.update', messageHistory);
+    console.log('sending messages to ' + user);
   });
 
   socket.on('chat.message', function(message){
