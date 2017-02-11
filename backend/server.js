@@ -9,13 +9,18 @@ app.get('/', function(req, res){
   res.sendFile(__dirname + '/views/index.html');
 });
 
+//  Should store in DB
+var messageHistory = [];
+var users = [];
+var ids = [];
+
+//  On connection (all socket.io code)
 io.on('connection', function(socket){
-
+  //  Print socket id
   console.log('A user ' + socket.id + ' connected');
-
+  //  When user picks a username - send data to front
   socket.on('join', function(user) {
     console.log(socket.id + ' set his username to ' + user);
-    io.sockets.emit('user.add', user);
     users.push(user);
     ids.push(socket.id);
     //  Populate user list
@@ -27,9 +32,12 @@ io.on('connection', function(socket){
     console.log('sending messages to ' + user);
   });
 
+  //  Message
   socket.on('chat.message', function(message){
         console.log(socket.id + ' : ' + message);
         io.sockets.emit('chat.message', message);
+        messageHistory.push(message);
+        message = "";
     });
 
   //  Disconnect - Not currently working
@@ -46,6 +54,7 @@ io.on('connection', function(socket){
       console.log('There has been an error with the userlist');
     }
   });
+
 
 });
 
