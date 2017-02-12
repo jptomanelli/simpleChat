@@ -1,7 +1,19 @@
+//const fs = require('fs');
+const http = require('http');
+//const https = require('https');
+
+//const privateKey = fs.readFileSync('sslcert/server.key', 'utf8');
+//const certificate = fs.readFileSync('sslcert/server.crt', 'utf8');
+
+//const credentials = {key : privateKey, cert : certificate};
 const express = require('express');
-const app = require('express')();
-const http = require('http').Server(app);
-const io = require('socket.io')(http);
+const app = express();
+
+const httpServer = http.createServer(app);
+//const httpsServer = https.createServer(credentials, app);
+
+const io = require('socket.io')(httpServer);
+//const io = require('socket.io')(httpsServer);
 
 app.use("/public", express.static(__dirname + '/public'));
 
@@ -59,6 +71,11 @@ io.on('connection', function(socket){
 });
 
 
-http.listen(3000, function(){
-  console.log('listening on *:3000');
+httpServer.listen(8080, function(){
+  console.log('http listening on 8080');
 });
+/*
+httpsServer.listen(8443, function(){
+  console.log('http listening on 8443');
+});
+*/
