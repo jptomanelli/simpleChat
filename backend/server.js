@@ -18,7 +18,13 @@ const io = require('socket.io')(httpServer);
 app.use("/public", express.static(__dirname + '/public'));
 
 app.get('/', function(req, res){
-  res.sendFile(__dirname + '/views/index.html');
+  res.status(200)
+    .sendFile(__dirname + '/views/index.html');
+});
+
+app.get('*', function(req, res) {
+  res.status(404)
+    .send('Not found');
 });
 
 //  Should store in DB
