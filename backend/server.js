@@ -51,11 +51,11 @@ io.on('connection', function(socket){
   });
 
   //  Message
-  socket.on('chat.message', function(message){
-        console.log(socket.id + ' : ' + message);
-        io.sockets.emit('chat.message', message);
-        messageHistory.push(message);
-        message = "";
+  socket.on('chat.message', function(data){
+        console.log(data.name + ' : ' + data.message);
+        io.sockets.emit('chat.message', data);
+        messageHistory.push(data);
+        data = null;
     });
 
   //  Disconnect - Not currently working

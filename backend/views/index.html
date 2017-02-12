@@ -95,8 +95,8 @@
         //  Get chat message
         socket.on('chat.message', function(data) {
             //  console.log(data);
-            var plaintext = messageDecrypt(data, this.key);
-            this.messages.push(plaintext);
+            var plaintext = messageDecrypt(data.message, this.key);
+            this.messages.push({ name : this.name , message : plaintext});
         }.bind(this));
         //  Update user list
         socket.on('users.update', function(users) {
@@ -104,12 +104,13 @@
           console.log(users);
         }.bind(this));
         //  Update messages
-        socket.on('chat.update', function(messages) {
+        socket.on('chat.update', function(data) {
           //  Decrypt message in messages
-          for ( var i = 0; i < messages.length; i++ ) {
-            messages[i] = messageDecrypt(messages[i], this.key);
+          for ( var i = 0; i < data.length; i++ ) {
+            data[i].message = messageDecrypt(data[i].message, this.key);
           }
-          this.messages = messages;
+          this.messages = data;
+          data = null;
         }.bind(this));
     },
     methods: {
@@ -131,7 +132,7 @@
         send: function(event){
             var ciphertext = CryptoJS.AES.encrypt(this.message, this.key).toString();
             //console.log("Sending: " + ciphertext);
-            socket.emit('chat.message', ciphertext);
+            socket.emit('chat.message', { name : this.name , message : ciphertext });
             this.message = '';
         }
     } ,
