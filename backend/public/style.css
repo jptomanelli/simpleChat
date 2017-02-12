@@ -8,12 +8,27 @@ body {
 body {
 	font-family: -apple-system, 'Helvetica Neue', Helvetica, sans-serif;
 }
-
+.side {
+	height: 100%;
+}
+.scroll-area {
+	width: 100%;
+	height:100%;
+	margin-top:10px;
+	background-color:black;
+	overflow-y:scroll;
+}
 .header {
   font-weight: 100;
   font-size: 50px;
   line-height: 68px;
 }
+.user-container {
+	position:relative;
+	width:100%;
+	height:100%;
+}
+
 @media (max-width: 900px) {
 .heading {
     font-size: 32px;
