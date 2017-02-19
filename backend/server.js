@@ -15,6 +15,9 @@ const httpServer = http.createServer(app);
 const io = require('socket.io')(httpServer);
 //const io = require('socket.io')(httpsServer);
 
+const Room = require('./models/room.js');
+const uuid = require('uuid-js');
+
 app.use("/public", express.static(__dirname + '/public'));
 
 app.get('/', function(req, res){
@@ -27,51 +30,68 @@ app.get('*', function(req, res) {
     .send('Not found');
 });
 
+function checkForRoom(obj, room) {
+	for (key in obj) {
+		if (key == room) {
+			return true;
+		}
+	}
+	return false;
+}
+
 //  Should store in DB
 var messageHistory = [];
 var users = [];
 var ids = [];
 
+var people = {};
+var rooms = {};
+
 //  On connection (all socket.io code)
-io.on('connection', function(socket){
-  //  Print socket id
-  console.log('A user ' + socket.id + ' connected');
-  //  When user picks a username - send data to front
-  socket.on('join', function(user) {
-    console.log(socket.id + ' set his username to ' + user);
-    users.push(user);
-    ids.push(socket.id);
-    //  Populate user list
-    io.sockets.emit('users.update', users);
-  });
-  //  ready
-  socket.on('ready', function(user) {
-    socket.emit('chat.update', messageHistory);
-    console.log('sending messages to ' + user);
-  });
+io.on('connection', function(socket) {
+	//  Print socket id
+	console.log('A user ' + socket.id + ' connected');
+  io.sockets.connected[socket.id].emit('announcement', {message : "Welcome!"});
+	//  When user picks a username - send data to front
+	socket.on('join', function(data) {
+		console.log(socket.id + ' set his username to ' + data.name);
+		if (!checkForRoom(rooms, data.room)) {
+			var tmpID = uuid.create().toString();
+			rooms[data.room] = new Room(data.room, tmpID, data.name);
+			rooms[data.room].addUser(data.name);
+			console.log(rooms[data.room]);
+		} else {
+			rooms[data.room].addUser(data.name);
+			console.log(rooms[data.room]);
+		}
+		socket.join(data.room);
+		/*
+		people[socket.id] = {
+			"name": user.name,
+			"room": user.room
+		};
+		*/
+		users.push(data.name);
+		ids.push(socket.id);
+		//  Populate user list
+		io.sockets.in(data.room).emit('users.update', rooms[data.room].getUsers());
+		//console.log(people);
+	});
+	//  ready
+	socket.on('ready', function(data) {
+		socket.emit('chat.update', rooms[data.room].getMessages());
+		console.log('sending messages to ' + data.user);
+	});
 
-  //  Message
-  socket.on('chat.message', function(data){
-        console.log(data.name + ' : ' + data.message);
-        io.sockets.emit('chat.message', data);
-        messageHistory.push(data);
-        data = null;
-    });
-
-  //  Disconnect - Not currently working
-  //  When a user disconnects they are not removed from user array
-  //  Maybe an issue with index or splice ? ?
-  socket.on('disconnect', function () {
-    var index = ids.indexOf(socket.id);
-    if (index > -1) {
-      ids.splice(index, 1);
-      users.splice(index,1);
-      console.log('\x1b[36m', socket.id + ' disconnected', '\x1b[0m');
-      io.sockets.emit('users.update', users);
-    } else {
-      console.log('There has been an error with the userlist');
-    }
-  });
+	//  Message
+	socket.on('chat.message', function(data) {
+		console.log(data.name + ' : ' + data.message);
+		io.sockets.in(data.room).emit('chat.message', data);
+		//io.sockets.emit('chat.message', data);
+		messageHistory.push(data);
+		rooms[data.room].addMessage(data);
+		data = null;
+	});
 
 
 });
