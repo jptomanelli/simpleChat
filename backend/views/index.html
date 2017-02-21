@@ -92,13 +92,20 @@
   </row>
     </div>
   </div>
+  <footer class="col-12">
+    <div class="footer">
+      <button v-if="keySet" class="btn">Leave Room</button>
+    </div>
+  </footer>
 </body>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     var socket = io.connect('/');
+
     socket.on('announcement', function(data) {
         console.log('Got announcement:', data.message);
     });
+
     var vm = new Vue({
     el: '#chatApp',
     data: {
@@ -114,39 +121,58 @@
         admin : false,
     },
     mounted: function() {
-        //  Get chat message
-        socket.on('chat.message', function(data) {
-            //  console.log(data);
-            var plaintext = messageDecrypt(data.message, this.key);
-            this.messages.push({ name : data.name , message : plaintext});
-        }.bind(this));
-        //  Update user list
-        socket.on('users.update', function(users) {
-          this.users = users;
-          console.log(users);
-        }.bind(this));
-        //  Update messages
-        socket.on('chat.update', function(data) {
-          //  Decrypt message in messages
-          for ( var i = 0; i < data.length; i++ ) {
-            data[i].message = messageDecrypt(data[i].message, this.key);
-          }
-          this.messages = data;
-          data = null;
-        }.bind(this));
+
+      socket.on('room.info', function(data) {
+        console.log(data);
+        if (data === true) {
+          this.admin = true;
+        }
+      }.bind(this));
+
+      //  Get chat message
+      socket.on('chat.message', function(data) {
+        //  console.log(data);
+        var plaintext = messageDecrypt(data.message, this.key);
+
+        this.messages.push({ name : data.name , message : plaintext});
+
+      }.bind(this));
+
+      //  Update user list
+      socket.on('users.update', function(users) {
+
+        this.users = users;
+        console.log(users);
+
+      }.bind(this));
+
+      //  Update messages
+      socket.on('chat.update', function(data) {
+        //  Decrypt message in messages
+        for ( var i = 0; i < data.length; i++ ) {
+          data[i].message = messageDecrypt(data[i].message, this.key);
+        }
+        //  Save locally
+        this.messages = data;
+        data = null;
+
+      }.bind(this));
     },
     methods: {
+        //  Not currently being used
         joinChat : function (name) {
             if (name) {
                 socket.emit('join', this.name);
             }
         } ,
+
         setName : function (name) {
           if (name) {
             this.name = name;
             this.join = true;
           }
         } ,
+
         setKey : function (key) {
           if (key) {
             this.key = key;
@@ -154,6 +180,7 @@
             socket.emit('ready' , {user : this.name, room : this.room });
           }
         } ,
+
         setRoom : function (room) {
           if (room) {
             this.room = room;
@@ -162,7 +189,7 @@
             socket.emit('join', {name : this.name, room : this.room });
           }
         },
-        //  Issue with sending ciphertext OBJ ?
+
         send: function(event){
             var ciphertext = CryptoJS.AES.encrypt(this.message, this.key).toString();
             //console.log("Sending: " + ciphertext);
