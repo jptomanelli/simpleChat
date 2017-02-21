@@ -16,18 +16,19 @@ const io = require('socket.io')(httpServer);
 //const io = require('socket.io')(httpsServer);
 
 const Room = require('./models/room.js');
+const User = require('./models/user.js');
 const uuid = require('uuid-js');
 
 app.use("/public", express.static(__dirname + '/public'));
 
-app.get('/', function(req, res){
-  res.status(200)
-    .sendFile(__dirname + '/views/index.html');
+app.get('/', function(req, res) {
+	res.status(200)
+		.sendFile(__dirname + '/views/index.html');
 });
 
 app.get('*', function(req, res) {
-  res.status(404)
-    .send('Not found');
+	res.status(404)
+		.send('Not found');
 });
 
 function checkForRoom(obj, room) {
@@ -54,23 +55,28 @@ io.on('connection', function(socket) {
   io.sockets.connected[socket.id].emit('announcement', {message : "Welcome!"});
 	//  When user picks a username - send data to front
 	socket.on('join', function(data) {
+		var tmpID;
 		console.log(socket.id + ' set his username to ' + data.name);
+
+		//	If room doesn't exist
 		if (!checkForRoom(rooms, data.room)) {
-			var tmpID = uuid.create().toString();
+			//	Create room
+			tmpID = uuid.create().toString();
 			rooms[data.room] = new Room(data.room, tmpID, data.name);
 			rooms[data.room].addUser(data.name);
+			//	create user
+			people[socket.id] = new User(data.name, data.room, true);	//	True for admin
+
 			console.log(rooms[data.room]);
+			console.log(people[socket.id]);
+
 		} else {
+			people[socket.id] = new User(data.name, data.room, false);
 			rooms[data.room].addUser(data.name);
 			console.log(rooms[data.room]);
 		}
 		socket.join(data.room);
-		/*
-		people[socket.id] = {
-			"name": user.name,
-			"room": user.room
-		};
-		*/
+
 		users.push(data.name);
 		ids.push(socket.id);
 		//  Populate user list
@@ -99,8 +105,8 @@ io.on('connection', function(socket) {
 });
 
 
-httpServer.listen(8080, function(){
-  console.log('http listening on 8080');
+httpServer.listen(8080, function() {
+	console.log('http listening on 8080');
 });
 /*
 httpsServer.listen(8443, function(){
