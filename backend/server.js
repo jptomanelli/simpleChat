@@ -101,6 +101,39 @@ io.on('connection', function(socket) {
 		data = null;
 	});
 
+	//	Disconnect
+	socket.on('disconnect', function() {
+		if (people[socket.id] != null) {
+
+			var test = (people[socket.id]);
+			var rm = test.getRoom();
+			var nm = (people[socket.id]).getName();
+			var isAdmin = rooms[rm].isOwner(nm);
+
+			if ( isAdmin ) {
+				//	Delete ROOM and send users to error page
+				console.log("admin left room");
+				var dest = '/error.html';
+				io.sockets.in(rm).emit('redirect', dest);
+				delete rooms[rm];
+
+			} else {
+				// REMOVE USER FROM ROOM
+				if (rooms[rm].removeUser(nm)) {
+					console.log("user deleted from room");
+				} else {
+					console.log("error deleting user from room");
+				}
+				//	THEN DELETE FROM PEOPLE
+				delete people[socket.id];
+				//	THEN EMIT TO ROOM ONLY - USER ROOM.USERS
+				io.sockets.in(rm).emit('users.update', rooms[rm].getUsers());
+			}
+
+		} else {
+			console.log("Error with disconnect");
+		}
+	});
 
 });
 
