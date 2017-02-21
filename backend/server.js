@@ -75,7 +75,9 @@ io.on('connection', function(socket) {
 		ids.push(socket.id);
 		//  Populate user list
 		io.sockets.in(data.room).emit('users.update', rooms[data.room].getUsers());
-		//console.log(people);
+
+		io.sockets.in(data.room).emit('room.info', rooms[data.room].isOwner(data.name) );
+
 	});
 	//  ready
 	socket.on('ready', function(data) {

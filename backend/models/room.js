@@ -27,4 +27,11 @@ Room.prototype.getUsers = function () {
   return this.users;
 };
 
+Room.prototype.isOwner = function (name) {
+  if (name === this.owner) {
+    return true;
+  }
+  return false;
+};
+
 module.exports = Room;
