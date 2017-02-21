@@ -17,7 +17,7 @@ Room.prototype.addMessage = function(message) {
   if (this.status === 'available') {
     this.messages.push(message);
   }
-}
+};
 
 Room.prototype.getMessages = function () {
   return this.messages;
@@ -33,5 +33,23 @@ Room.prototype.isOwner = function (name) {
   }
   return false;
 };
+
+Room.prototype.getId = function () {
+  return this.id;
+};
+
+Room.prototype.removeUser = function (usr) {
+  if (usr === this.owner) {
+    //  Admin can't leave the room
+    //  can only close
+    return false;
+  }
+  var index = this.users.indexOf(usr);
+  if (index > -1) {
+    this.users.splice(index, 1);
+    return true;
+  }
+  return false;
+}
 
 module.exports = Room;
