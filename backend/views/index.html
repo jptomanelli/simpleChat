@@ -6,6 +6,7 @@
       <link rel="stylesheet" href="public/JS/bootstrap/dist/css/bootstrap.min.css">
       <script type="text/javascript" src="public/JS/crypto-js/crypto-js.js"></script>
       <script type="text/javascript" src="public/JS/vue/dist/vue.min.js"></script>
+      <script type="text/javascript" src="public/script.js"></script>
       <link rel="stylesheet" type="text/css" href="../public/style.css" />
     </head>
     <body>
@@ -94,11 +95,6 @@
 </body>
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    var messageDecrypt = (message, key) => {
-      var decrypted = CryptoJS.AES.decrypt(message, key)
-      var plaintext = decrypted.toString(CryptoJS.enc.Utf8);
-      return (plaintext);
-    }
     var socket = io.connect('/');
     socket.on('announcement', function(data) {
         console.log('Got announcement:', data.message);
