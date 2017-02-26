@@ -115,7 +115,12 @@ io.on('connection', function(socket) {
 				console.log("admin left room");
 				var dest = '/error.html';
 				io.sockets.in(rm).emit('redirect', dest);
-				delete rooms[rm];
+
+				//	Make sure users are kicked out of room before deleting..
+				setTimeout(function() {
+					delete rooms[rm];
+					console.log("Room Deleted")
+				}, 3000);
 
 			} else {
 				// REMOVE USER FROM ROOM
