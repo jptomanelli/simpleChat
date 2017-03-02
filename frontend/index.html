@@ -1,51 +1,208 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>simpleChat</title>
-    <script type="text/javascript" src="bower_components/vue/dist/vue.min.js"></script>
-    <script type="text/javascript" src="bower_components/crypto-js/crypto-js.js"></script>
-    <link rel="stylesheet" type="text/css" href="style.css" />
-  </head>
-  <body>
-    <h1 style="text-align: center">simpleChat</h1>
-    <p style="text-align: center">
-      We are using Node.js <script>document.write(process.versions.node)</script>,
-      Chromium <script>document.write(process.versions.chrome)</script>,
-      and Electron <script>document.write(process.versions.electron)</script>.
-    </p>
-    <div id="app">
-      <p>Message: </p><input v-model="message">
-      <p>Secret: </p><input v-model="secret">
-      <p>Data : {{data}}</p>
-      <button v-on:click="enc">Encrypt</button>
-      <button v-on:click="dec">Decrypt</button>
-    </div>
-  </body>
-<script>
-    var json, ciphertext, decrypted, plaintext;
-    var app = new Vue({
-      el: "#app" ,
-      data : {
-        message: "Plain Text here" ,
-        secret: "Secret Passphrase" ,
-        data : ""
-      } ,
-      methods : {
-        enc : function () {
-          json = CryptoJS.AES.encrypt(this.message, this.secret);
-          ciphertext = json.ciphertext.toString(CryptoJS.enc.Base64);
-          this.data = ciphertext;
-          this.message = ciphertext;
-          this.secret = "";
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>simpleChat</title>
+          <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+          <script type="text/javascript" src="bower_components/vue/dist/vue.min.js"></script>
+          <script type="text/javascript" src="bower_components/crypto-js/crypto-js.js"></script>
+          <script type="text/javascript" src="script.js"></script>
+          <link rel="stylesheet" type="text/css" href="style.css" />
+        </head>
+        <body>
+          <!--  Title -->
+          <h1 class="header">SimpleChat</h1>
+          <!--  chatApp container -->
+          <div class="container" id="chatApp">
+            <!--  Choose username -->
+            <div v-if="!join" id="join" class="text-center">
+              <h2 class="subheader">
+                Subheading
+              </h2>
+              <h2 class="paragraph ">
+                The first approach uses Bootstrap's own offset classes so it requires no change in markup and no extra CSS. The key is to set an offset equal to half of the remaining size of the row. So for example, a column of size 2 would be centered by adding an of
+              </h2>
+              <hr>
+              <form v-on:submit.prevent="setName(name)">
+                <div class="form-group form-group-md">
+                    <input type="text" class="form-control input-md text-center" v-model="name" placeholder="Name">
+                </div>
+                <button class="btn btn-primary btn-md" type="submit">Set</button>
+            </form>
+          </div>
+
+          <div v-if="join" class="text-center">
+            <div v-if="!roomSet" class="text-center">
+              <form v-on:submit.prevent="setRoom(room)">
+                <div class="form-group form-group-md">
+                  <input type="text" class="form-control input-md text-center" v-model="room" placeholder="Room">
+                </div>
+                <button class="btn btn-primary btn-md" type="submit">Set</button>
+              </form>
+            </div>
+
+            <div v-if="roomSet" class="text-center">
+          <div v-if="!keySet" id="key" class="text-center">
+            <form v-on:submit.prevent="setKey(key)">
+              <div class="form-group form-group-md">
+                  <input style="height:200px;font-size:14pt;" type="text" class="form-control input-md text-center" v-model="key" placeholder="Key">
+              </div>
+              <button class="btn btn-primary btn-md" type="submit">Set</button>
+          </form>
+          </div>
+        </div>
+        </div>
+
+          <!--  Messaging -->
+        <div v-if="join" class="text-center">
+          <div v-if="keySet" class="text-center">
+          <p>Hello, {{name}}</p>
+          <p v-if="admin">You are the admin of /{{room}}</p>
+          <p v-else>You are in /{{room}}</p>
+          <hr>
+          <row>
+          <div class="col-xs-12 col-sm-3 col-md-3 col-lg-3 side">
+            <div class="user-container">
+              <div class="top">
+                <h3>Online Users</h3>
+              </div>
+              <div class="scroll-area">
+              <a class="list-group">
+                <a href="#" class="list-group-item list-group-item-action" v-for="user in users">{{user}}</a>
+              </a>
+            </div>
+        </div>
+      </div>
+          <div class="col-xs-12 col-sm-9 col-md-9 col-lg-9">
+            <h3>Messages</h3>
+          <ul class="list-group">
+            <div v-for="message in messages">
+            <li class="list-group-item">{{message.name}} - {{message.message}}</li>
+          </div>
+          </ul>
+          <div class="container">
+              <form v-on:submit.prevent="send(message)">
+                <div class="input-group">
+                <input v-model="message" type="text" class="form-control input-md " placeholder="message">
+                  <button class="btn btn-secondary" type="submit">Send</button>
+                </div>
+            </form>
+        </div>
+        </div>
+      </row>
+        </div>
+      </div>
+      <footer class="col-12">
+        <div class="footer">
+          <button v-if="keySet" class="btn">Leave Room</button>
+        </div>
+      </footer>
+    </body>
+      <script src="http://localhost:8080/socket.io/socket.io.js"></script>
+      <script>
+        var socket = io.connect('http://localhost:8080');
+
+        socket.on('announcement', function(data) {
+            console.log('Got announcement:', data.message);
+        });
+
+        var vm = new Vue({
+        el: '#chatApp',
+        data: {
+            join: false,
+            keySet: false,
+            roomSet: false,
+            name: null,
+            key: null,
+            message: '',
+            messages: [],
+            users: [],
+            room: null,
+            admin : false,
+        },
+        mounted: function() {
+
+          socket.on('room.info', function(data) {
+            console.log(data);
+            if (data === true) {
+              this.admin = true;
+            }
+          }.bind(this));
+
+          //  Get chat message
+          socket.on('chat.message', function(data) {
+            //  console.log(data);
+            var plaintext = messageDecrypt(data.message, this.key);
+
+            this.messages.push({ name : data.name , message : plaintext});
+
+          }.bind(this));
+
+          //  Update user list
+          socket.on('users.update', function(users) {
+
+            this.users = users;
+            console.log(users);
+
+          }.bind(this));
+
+          //  Update messages
+          socket.on('chat.update', function(data) {
+            //  Decrypt message in messages
+            for ( var i = 0; i < data.length; i++ ) {
+              data[i].message = messageDecrypt(data[i].message, this.key);
+            }
+            //  Save locally
+            this.messages = data;
+            data = null;
+
+          }.bind(this));
+
+          socket.on('redirect', function(dest) {
+            window.location.href = dest;
+
+          }.bind(this));
+
+        },
+        methods: {
+            //  Not currently being used
+            joinChat : function (name) {
+                if (name) {
+                    socket.emit('join', this.name);
+                }
+            } ,
+
+            setName : function (name) {
+              if (name) {
+                this.name = name;
+                this.join = true;
+              }
+            } ,
+
+            setKey : function (key) {
+              if (key) {
+                this.key = key;
+                this.keySet = true;
+                socket.emit('ready' , {user : this.name, room : this.room });
+              }
+            } ,
+
+            setRoom : function (room) {
+              if (room) {
+                this.room = room;
+                this.roomSet = true;
+                socket.emit('setRoom',this.room);
+                socket.emit('join', {name : this.name, room : this.room });
+              }
+            },
+
+            send: function(event){
+                var ciphertext = CryptoJS.AES.encrypt(this.message, this.key).toString();
+                //console.log("Sending: " + ciphertext);
+                socket.emit('chat.message', { name : this.name , message : ciphertext, room : this.room});
+                this.message = '';
+            }
         } ,
-        dec : function () {
-            decrypted = CryptoJS.AES.decrypt(json, this.secret)
-            plaintext = decrypted.toString(CryptoJS.enc.Utf8);
-            this.data = plaintext;
-            this.message = plaintext;
-        }
-      }
-    })
-  </script>
-</html>
+        });
+      </script>
+    </html>
