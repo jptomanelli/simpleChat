@@ -19,6 +19,9 @@ const Room = require('./models/room.js');
 const User = require('./models/user.js');
 const uuid = require('uuid-js');
 
+const MongoClient = require('mongodb').MongoClient;
+const assert = require('assert');
+
 app.use("/public", express.static(__dirname + '/public'));
 
 app.get('/', function(req, res) {
@@ -151,3 +154,10 @@ httpsServer.listen(8443, function(){
   console.log('http listening on 8443');
 });
 */
+
+var url = 'mongodb://localhost:27017';
+MongoClient.connect(url, function(err, db) {
+	assert.equal(null, err);
+	console.log("Connected to Mongo server on 27017");
+	db.close();
+});
