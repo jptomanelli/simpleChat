@@ -10,7 +10,9 @@ const BrowserWindow = electron.BrowserWindow;
 let mainWindow;
 
 function createWindow() {
-  mainWindow = new BrowserWindow({ width: 300, height: 600 });
+  mainWindow = new BrowserWindow({ width: 275, height: 500 });
+  mainWindow.setMinimumSize( 275 , 500);
+  mainWindow.setMaximumSize( 350, 900);
   mainWindow.loadURL(url.format({
     pathname: path.join(__dirname, 'views/index.html'),
     protocol: 'file:',
